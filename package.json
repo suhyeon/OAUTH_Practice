@@ -25,6 +25,7 @@
     "passport-github": "^1.1.0",
     "passport-google-oauth20": "^1.0.0",
     "passport-instagram": "^1.0.0",
+    "passport-kakao": "0.0.5",
     "pug": "^2.0.0-rc.4",
     "validator": "^8.2.0"
   }

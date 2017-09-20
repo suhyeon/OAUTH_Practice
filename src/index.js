@@ -10,6 +10,7 @@ const passport = require('passport')
 const GitHubStrategy = require('passport-github').Strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const FacebookStrategy = require('passport-facebook').Strategy
+const KakaoStrategy = require('passport-kakao').Strategy
 
 const util = require('./util')
 const query = require('./query')
@@ -113,6 +114,25 @@ passport.use(new FacebookStrategy({
   })
 }))
 
+passport.use(new KakaoStrategy({
+  clientID: process.env.KAKAO_CLIENT_ID,
+  clientSecret: process.env.KAKAO_CLIENT_SECRET,
+  callbackURL: process.env.KAKAO_CALLBACK_URL
+}, (accessToken, refreshToken, profile, done) => {
+  const avatar_url = profile._json.properties.profile_image ? profile._json.properties.profile_image : null // 프로필 사진
+  query.firstOrCreateUserByProvider( //...으로 로그인 하기 링크를 누른 후 , 정보를 주려고 준비하는 단계
+    // readme.md 의 6번과 7번 프로토콜 사이
+    'kakao', //google 프로바이더에 대한 같은 식별자가 있으면 가지고 오고,
+    profile.id, // 없다면 새로 만든다
+    accessToken, // 그게 여기에서 일어난다.
+    avatar_url
+  ).then(user => {
+    done(null, user)
+  }).catch(err => {
+    done(err)
+  })
+}))
+
 app.get('/', mw.loginRequired, (req, res) => {
   res.render('index.pug', req.user)
 })
@@ -153,7 +173,17 @@ app.get('/auth/facebook', passport.authenticate('facebook', {
   //authType: 'rerequest',
   scope: ['public_profile', 'manage_pages']
 }))
+
 app.get('/auth/facebook/callback', passport.authenticate('facebook', {
+  successRedirect: '/',
+  failureRedirect: '/login',
+  failureFlash: true
+}))
+//kakao
+app.get('/auth/kakao', passport.authenticate('kakao', {
+  //scope: ['profile']
+}))
+app.get('/auth/kakao/callback', passport.authenticate('kakao', {
   successRedirect: '/',
   failureRedirect: '/login',
   failureFlash: true
